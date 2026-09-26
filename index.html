@@ -8,7 +8,7 @@
 <meta name="description" content="Drop in a short video and get a title, description, hashtags and thumbnail in one click.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Hind:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Archivo:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,17 +17,35 @@
   <div class="stage3d" aria-hidden="true"><div class="stars" id="stars"></div><div class="tilt" id="tilt"><div class="ring" id="ring"></div></div></div>
   <nav class="nav">
     <div class="brand">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6C7BFF"/><stop offset="1" stop-color="#FF5C7C"/></linearGradient></defs><rect x="2" y="2" width="28" height="28" rx="9" fill="url(#lg)"/><path d="M12.5 9.5v13l10-6.5z" fill="#fff"/></svg>
+      <svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E7A23C"/><stop offset="1" stop-color="#B7492A"/></linearGradient></defs><rect x="2" y="2" width="28" height="28" rx="7" fill="url(#lg)"/><path d="M12.5 9.5v13l10-6.5z" fill="#1B130A"/></svg>
       ClipPack
     </div>
-    <span class="pill">Test version</span>
+    <span class="pill">beta</span>
   </nav>
   <div class="hero-copy">
     <div class="in">
       <h1>Drop a video. We do the rest.</h1>
-      <p class="lede">Title, description, hashtags and thumbnail. One click, in Hindi, Hinglish or English.</p>
+      <p class="lede">Title, description, hashtags and a thumbnail, read straight off your clip. One pass, in Hindi, Hinglish or English.</p>
       <a class="cta" href="#studio">Choose a video</a>
     </div>
+  </div>
+</section>
+
+<section class="steps" aria-label="How it works">
+  <div class="step">
+    <p class="step-n">01</p>
+    <p class="step-t">Drop your clip</p>
+    <p class="step-d">MP4 or MOV. It stays on your phone — only four frames go to the AI.</p>
+  </div>
+  <div class="step">
+    <p class="step-n">02</p>
+    <p class="step-t">The AI reads the frames</p>
+    <p class="step-d">Title, description, hashtags, best posting time and a thumbnail, all from what's on screen.</p>
+  </div>
+  <div class="step">
+    <p class="step-n">03</p>
+    <p class="step-t">Copy and post</p>
+    <p class="step-d">Everything's ready to paste in. Give it a read before you publish.</p>
   </div>
 </section>
 
@@ -36,7 +54,7 @@
     <h2>Drop your video here</h2>
 
     <label class="drop" id="drop" for="file">
-      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="4" y="10" width="40" height="28" rx="6" stroke="#A6ABC6" stroke-width="2.5"/><path d="M20 19v10l9-5z" fill="#F3F4FA"/></svg>
+      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="4" y="10" width="40" height="28" rx="6" stroke="currentColor" stroke-width="2.5"/><path d="M20 19v10l9-5z" fill="currentColor"/></svg>
       <span class="drop-title" id="dropTitle">Choose a video</span>
       <span class="drop-sub" id="dropSub">MP4 or MOV. Your video is never uploaded; only 4 small frames go to the AI.</span>
     </label>
@@ -44,7 +62,7 @@
 
     <div class="grid">
       <div>
-        <label class="field" for="platform">Where will you post?</label>
+        <label class="field" for="platform">Main platform (opens first below)</label>
         <select id="platform">
           <option value="ytshorts">YouTube Shorts</option>
           <option value="ytlong">YouTube (long video)</option>
@@ -67,7 +85,7 @@
 
     <button class="primary" id="go" type="button" disabled>Choose a video or write a line</button>
     <button class="ghost" id="stop" type="button" hidden style="margin-top:10px;width:100%">Stop</button>
-    <div class="bar" id="bar" aria-hidden="true"></div>
+    <div class="loadbar" id="bar" aria-hidden="true"></div>
     <p id="status" role="status" aria-live="polite"></p>
     <p class="note">Your video never leaves your phone. Only 4 small frames are sent to Google's Gemini AI to write the text. It also works without a video: just write one line above.</p>
   </div>
@@ -82,36 +100,69 @@
     <p class="summary reveal" id="summary" style="--i:0"></p>
 
     <div class="block reveal" style="--i:1">
-      <div class="sec-h"><h2>Title</h2></div>
-      <ul class="titles" id="titles"></ul>
+      <div class="sec-h"><h2>Optimization score</h2></div>
+      <div class="score">
+        <div class="score-top"><span class="score-num" id="scoreNum">0</span><span class="score-max">/100</span></div>
+        <div class="score-bar"><div class="score-fill" id="scoreFill"></div></div>
+        <p class="note" id="scoreReason" style="margin-top:8px"></p>
+      </div>
     </div>
 
     <div class="block reveal" style="--i:2">
-      <div class="sec-h"><h2>Description</h2><button class="ghost" type="button" data-copy="description">Copy</button></div>
-      <p class="pre" id="description"></p>
+      <div class="sec-h"><h2>Topic</h2></div>
+      <p class="chips" style="display:flex"><span class="cat-chip" id="category"></span></p>
     </div>
 
     <div class="block reveal" style="--i:3">
-      <div class="sec-h"><h2>Hashtags</h2><button class="ghost" type="button" data-copy="hashtags">Copy</button></div>
-      <ul class="chips" id="hashtags"></ul>
+      <div class="sec-h"><h2>Hook ideas</h2></div>
+      <ul class="replies" id="hooks"></ul>
     </div>
 
     <div class="block reveal" style="--i:4">
-      <div class="sec-h"><h2>Tags (YouTube)</h2><button class="ghost" type="button" data-copy="tags">Copy</button></div>
-      <p class="tags" id="tags"></p>
+      <div class="sec-h"><h2>Title, description &amp; hashtags</h2><button class="ghost" type="button" id="copyAll">Copy all</button></div>
+      <div class="ptabs" id="ptabs" role="group" aria-label="Platform">
+        <button class="stylechip" type="button" data-p="ytshorts" aria-pressed="false">Shorts</button>
+        <button class="stylechip" type="button" data-p="reels" aria-pressed="false">Reels</button>
+        <button class="stylechip" type="button" data-p="fb" aria-pressed="false">Facebook</button>
+        <button class="stylechip" type="button" data-p="ytlong" aria-pressed="false">YT long</button>
+      </div>
+      <p class="titles-single" id="pTitle"></p>
+      <p class="pre" id="pDescription" style="margin-top:10px"></p>
+      <ul class="chips" id="pHashtags" style="margin-top:10px"></ul>
     </div>
 
     <div class="block reveal" style="--i:5">
+      <div class="sec-h"><h2>Tags (YouTube search)</h2><button class="ghost" type="button" data-copy="tags">Copy</button></div>
+      <p class="tags" id="tags"></p>
+    </div>
+
+    <div class="block reveal" style="--i:6">
+      <div class="sec-h"><h2>Thumbnail visual idea</h2></div>
+      <p class="pre" id="thumbIdea"></p>
+    </div>
+
+    <div class="block reveal" style="--i:7">
       <div class="sec-h"><h2>Best time to post</h2></div>
       <p class="besttime" id="besttime"></p>
     </div>
 
-    <div class="block reveal" style="--i:6">
+    <div class="block reveal" style="--i:8">
+      <div class="sec-h"><h2>Reused-content check</h2></div>
+      <p class="risk" id="riskNote"></p>
+      <p class="note">A rough read from the frames only, not a copyright check. When in doubt, use your own footage and audio.</p>
+    </div>
+
+    <div class="block reveal" style="--i:9">
+      <div class="sec-h"><h2>Ways to improve it</h2></div>
+      <ol class="improve" id="improvements"></ol>
+    </div>
+
+    <div class="block reveal" style="--i:10">
       <div class="sec-h"><h2>Comment reply ideas</h2></div>
       <ul class="replies" id="replies"></ul>
     </div>
 
-    <div class="block reveal" style="--i:7">
+    <div class="block reveal" style="--i:11">
       <div class="sec-h"><h2>Thumbnail</h2></div>
       <div class="stylebar" id="stylebar" role="group" aria-label="Thumbnail style">
         <button class="stylechip" type="button" data-style="bold" aria-pressed="true">Bold</button>
@@ -132,7 +183,7 @@
       <p id="dlmsg" class="note" role="status"></p>
     </div>
 
-    <p class="foot reveal" style="--i:8">This doesn't use trending data yet, only your video frames and your line. Read the AI's suggestions once before posting.</p>
+    <p class="foot reveal" style="--i:12">This doesn't use trending data yet, only your video frames and your line. Read the AI's suggestions once before posting.</p>
   </section>
 </main>
 
@@ -141,4 +192,3 @@
 <script src="app.js"></script>
 </body>
 </html>
-
