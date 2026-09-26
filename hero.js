@@ -8,7 +8,7 @@
   window.ClipStage={setBusy:function(b){ spinTarget=b?90:8; }};
   if(!hero||!ring||!tilt) return;
 
-  var PAL=[["#6C7BFF","#FF5C7C","#FFB43A"],["#FFB43A","#FF5C7C","#6C7BFF"],["#47E0B8","#6C7BFF","#FF5C7C"],["#FF5C7C","#8A5BFF","#FFB43A"]];
+  var PAL=[["#E7A23C","#B7492A","#F2D9A8"],["#C97435","#8C3A22","#E7A23C"],["#B7492A","#6E4A2A","#E7A23C"],["#D98A2E","#7A2E1C","#F2D9A8"]];
   var LAB=["#Shorts","Title \u2713","#Reels","Tags \u2713","#YouTube","Thumbnail \u2713"];
   var N=9, cards=[];
   for(var i=0;i<N;i++){
