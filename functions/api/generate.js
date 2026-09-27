@@ -207,4 +207,4 @@ export async function onRequestPost({ request, env }) {
   if (!parsed || typeof parsed !== "object") return json({ error: "invalid_json" }, 502);
   parsed._trend_researched = !!trendText;
   return json({ result: parsed });
-      }
+                             }
