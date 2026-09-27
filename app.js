@@ -52,7 +52,7 @@
   hint.addEventListener("input",refreshGo);
   refreshGo();
 
-  /* ----- frames ----- */
+  /* ----- frames & audio ----- */
   function loadVideo(f){
     return new Promise(function(res,rej){
       var url=URL.createObjectURL(f), v=document.createElement("video");
@@ -83,11 +83,70 @@
       return {frames:out,duration:dur};
     } finally { URL.revokeObjectURL(lv.url); }
   }
+
+  // AUDIO EXTRACTION: Browser me WebAudio se video ka audio decode karna
+  async function extractAudio(file) {
+    try {
+      var arrayBuffer = await file.arrayBuffer();
+      var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      
+      var offlineCtx = new OfflineAudioContext(1, audioBuffer.sampleRate * Math.min(audioBuffer.duration, 45), 16000);
+      var source = offlineCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(offlineCtx.destination);
+      source.start();
+      
+      var renderedBuffer = await offlineCtx.startRendering();
+      var pcmData = renderedBuffer.getChannelData(0);
+      
+      // Convert to WAV
+      var wavBuffer = createWavBuffer(pcmData, 16000);
+      var binary = "";
+      var bytes = new Uint8Array(wavBuffer);
+      var len = bytes.byteLength;
+      for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return { mime: "audio/wav", data: window.btoa(binary) };
+    } catch (e) {
+      console.warn("Audio extraction skipped/failed:", e);
+      return null;
+    }
+  }
+
+  function createWavBuffer(samples, sampleRate) {
+    var buffer = new ArrayBuffer(44 + samples.length * 2);
+    var view = new DataView(buffer);
+    function writeString(offset, string) {
+      for (var i = 0; i < string.length; i++) { view.setUint8(offset + i, string.charCodeAt(i)); }
+    }
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + samples.length * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, samples.length * 2, true);
+    var offset = 44;
+    for (var i = 0; i < samples.length; i++, offset += 2) {
+      var s = Math.max(-1, Math.min(1, samples[i]));
+      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    }
+    return buffer;
+  }
+
   function toBlob(c,maxW){
     var s=Math.min(1,maxW/c.width), o=document.createElement("canvas");
     o.width=Math.round(c.width*s); o.height=Math.round(c.height*s);
     o.getContext("2d").drawImage(c,0,0,o.width,o.height);
-    return new Promise(function(r){ o.toBlob(r,"image/jpeg",0.8); });
+    return new Promise(function(r){ o.toBlob(r,"image/jpeg",0.7); });
   }
   function blobToImage(b){
     return new Promise(function(res,rej){
@@ -113,33 +172,30 @@
   function buildPrompt(n,dur,note){
     return [
       "You are an assistant that helps an Indian short-video creator get one clip ready to publish.",
-      n>0?("The attached images are "+n+" frames of the video in time order (video length about "+Math.round(dur)+" seconds)."):"No video frames are attached; use only the creator's note.",
+      "LISTEN CAREFULLY to the attached spoken audio track to understand exactly what is being said, the main topic, names, places, and context.",
+      n>0?("The attached images are "+n+" visual frames of the video in time order."):"No video frames are attached.",
       "Creator's own note (may be empty): \""+(note||"").slice(0,500)+"\"",
       "Output language for every text field: "+LANG[langSel.value],
-      "",
-      "Base everything only on what is visible in the frames and the note. If something is unclear, stay general. Never invent names, places, prices, statistics or claims. No misleading clickbait.",
-      "",
       "Fill every field below:",
-      "- score: a whole number 0 to 100 rating how ready this clip looks to publish as-is (hook strength, visual clarity, pacing you can infer from the frames). 100 is not achievable from 4 frames alone, so keep it realistic, mid-range unless it clearly stands out.",
+      "- score: a whole number 0 to 100 rating how ready this clip looks to publish as-is.",
       "- score_reason: one short line explaining the score in plain language.",
-      "- category: 1 to 3 words naming the content niche (for example \"Home Cooking\" or \"Fitness\").",
-      "- hooks: 5 short, distinct opening lines (spoken or on-screen text) a creator could use in the first 2 seconds to stop the scroll. Not the same as the titles below.",
+      "- category: 1 to 3 words naming the content niche.",
+      "- hooks: 5 short, distinct opening lines a creator could use in the first 2 seconds.",
       "- platforms: an object with exactly these 4 keys, each holding {title, description, hashtags}, all in the output language:",
       "  - ytshorts: "+PLATFORM_SPEC.ytshorts,
       "  - ytlong: "+PLATFORM_SPEC.ytlong,
       "  - reels: "+PLATFORM_SPEC.reels,
       "  - fb: "+PLATFORM_SPEC.fb,
-      "  Every hashtags array uses real # symbols, no spaces inside a tag. Every description is 2 to 4 short lines with no hashtags inside it.",
-      "- tags: 10 to 15 plain YouTube search keywords or phrases, no # symbol.",
-      "- thumbnail_text: 2 to 4 words, at most 22 characters, punchy, in the output language, for overlay text on the thumbnail image.",
-      "- thumbnail_emoji: one single emoji fitting the video's mood, for a decorative thumbnail badge.",
-      "- thumbnail_visual_idea: one or two sentences describing an ideal thumbnail shot for this video (framing, expression, what should be visible), for a creator who wants to reshoot or design a custom thumbnail.",
-      "- best_frame: the number (1 to "+Math.max(n,1)+") of the attached frame that makes the best thumbnail (sharp, clear subject); 0 if there are no frames.",
-      "- best_time: one short line with a practical day/time window to post this for an Indian audience, and a one-phrase reason.",
-      "- risk_note: one short, hedged line on whether this clip looks like original footage or looks like a repost/widely reused trend/audio, based only on what the frames suggest. Always make clear this is a rough guess from a few frames, never a certain or legal claim. If nothing stands out, say so plainly.",
-      "- improvements: 3 to 5 short, concrete, actionable suggestions to make this specific clip perform better before posting.",
-      "- comment_replies: 3 short, friendly reply templates a creator can paste when replying to viewer comments on this video. Generic enough to reuse, not tied to one specific comment.",
-      "- summary: one short line saying what you understood the video is about, so the creator can check it.",
+      "- tags: 10 to 15 plain YouTube search keywords or phrases.",
+      "- thumbnail_text: 2 to 4 words punchy overlay text.",
+      "- thumbnail_emoji: one single emoji.",
+      "- thumbnail_visual_idea: one or two sentences describing an ideal thumbnail shot.",
+      "- best_frame: the number (1 to "+Math.max(n,1)+") of the frame that makes the best thumbnail.",
+      "- best_time: practical window to post for an Indian audience.",
+      "- risk_note: short line on whether this clip looks original or reused.",
+      "- improvements: 3 to 5 actionable suggestions.",
+      "- comment_replies: 3 friendly reply templates.",
+      "- summary: one short line summarizing the spoken audio & video.",
       "",
       "Reply with ONLY this JSON, matching every key exactly:",
       "{\"summary\":\"\",\"score\":0,\"score_reason\":\"\",\"category\":\"\",\"hooks\":[\"\",\"\",\"\",\"\",\"\"],",
@@ -151,20 +207,25 @@
   /* ----- server call ----- */
   var ERR={
     rate_limited:"The free AI limit is reached for now. Wait a minute and try again.",
-    not_configured:"The server isn't set up yet: add GEMINI_API_KEY in your Cloudflare project settings.",
-    upstream_config:"The AI service rejected the request. Check your API key and the GEMINI_MODEL name.",
+    not_configured:"The server isn't set up yet: add GEMINI_API_KEY in Cloudflare settings.",
+    upstream_config:"The AI service rejected the request. Check API key and GEMINI_MODEL.",
     upstream:"The AI service didn't respond. Try again in a moment.",
-    invalid_json:"The AI's answer came back in the wrong format. Tap generate again.",
-    refused:"The AI couldn't answer this input. Try another video or line.",
-    bad_request:"Something was missing. Add a video or a longer line and try again.",
-    bad_image:"The video frames were rejected. Try another video, or write one line instead.",
-    forbidden:"This request was blocked. Open the site from its own address.",
-    network:"Couldn't reach the server. Check your internet and try again."
+    invalid_json:"The AI answer came in wrong format. Tap generate again.",
+    refused:"The AI couldn't answer this input. Try another video.",
+    bad_request:"Something was missing. Add a video and try again.",
+    forbidden:"Request blocked. Open site from its own address.",
+    network:"Couldn't reach server. Check internet and try again."
   };
-  async function callApi(prompt,images,signal){
+
+  async function callApi(prompt, images, audio, signal){
     var res;
     try{
-      res=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:prompt,images:images}),signal:signal});
+      res=await fetch("/api/generate",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({prompt:prompt, images:images, audio:audio}),
+        signal:signal
+      });
     }catch(e){
       if(e&&e.name==="AbortError") throw {code:"cancelled"};
       throw {code:"network"};
@@ -189,23 +250,27 @@
     selectStyle("bold");
     var t0=Date.now(), timer=null;
     try{
-      var images=[], dur=0, note=hint.value.trim();
+      var images=[], audio=null, dur=0, note=hint.value.trim();
       if(file){
-        setStatus("Extracting frames from your video...");
-        var r=null;
-        try{ r=await extractFrames(file,4); }catch(e){ r=null; }
-        if(r){
-          frames=r.frames; dur=r.duration;
-          var blobs=await Promise.all(frames.map(function(f){ return toBlob(f,640); }));
-          images=await Promise.all(blobs.map(blobToImage));
-        } else if(note.length<10){
-          setStatus("This video couldn't be opened in the browser (format). Try another video, or write one line and generate without a video.","err");
-          return;
+        setStatus("Extracting audio & video frames...");
+        
+        // Extract both Frames and Audio simultaneously
+        var rExt = await extractFrames(file, 3);
+        if(rExt){
+          frames = rExt.frames;
+          dur = rExt.duration;
+          var blobs = await Promise.all(frames.map(function(f){ return toBlob(f, 480); }));
+          images = await Promise.all(blobs.map(blobToImage));
         }
+
+        setStatus("Extracting speech/audio track...");
+        audio = await extractAudio(file);
       }
-      timer=setInterval(function(){ setStatus("AI is thinking... "+Math.round((Date.now()-t0)/1000)+" sec"); },1000);
-      setStatus("AI is thinking...");
-      var out=await callApi(buildPrompt(images.length,dur,note),images,ctl.signal);
+
+      timer=setInterval(function(){ setStatus("AI is analyzing speech & video... "+Math.round((Date.now()-t0)/1000)+" sec"); },1000);
+      setStatus("AI is analyzing speech & video...");
+      
+      var out=await callApi(buildPrompt(images.length, dur, note), images, audio, ctl.signal);
       var pin=out.platforms&&typeof out.platforms==="object"?out.platforms:{};
       var anyTitle=PLATFORMS.some(function(k){ return pin[k]&&str(pin[k].title); });
       if(!anyTitle) throw {code:"invalid_json"};
@@ -227,7 +292,7 @@
       data.hooks=arr(out.hooks).map(str).filter(Boolean).slice(0,5);
       data.tags=arr(out.tags).map(str).filter(Boolean).slice(0,16);
       data.thumbIdea=str(out.thumbnail_visual_idea);
-      data.riskNote=str(out.risk_note)||"Not enough to judge from the frames alone.";
+      data.riskNote=str(out.risk_note)||"Not enough to judge.";
       data.improvements=arr(out.improvements).map(str).filter(Boolean).slice(0,6);
       var bf=parseInt(out.best_frame,10);
       bestIdx=(frames.length&&bf>=1&&bf<=frames.length)?bf-1:0;
@@ -295,7 +360,7 @@
     if(frames.length){
       frames.forEach(function(c,i){
         var b=document.createElement("button"); b.type="button"; b.className="frame";
-        b.setAttribute("aria-label","Use frame "+(i+1)+" for the thumbnail");
+        b.setAttribute("aria-label","Use frame "+(i+1)+" for thumbnail");
         b.setAttribute("aria-pressed",i===bestIdx?"true":"false");
         var img=document.createElement("img"); img.alt=""; img.src=c.toDataURL("image/jpeg",0.5); b.appendChild(img);
         var tag=document.createElement("span"); tag.className="tag"; tag.textContent="Thumbnail"; tag.hidden=i!==bestIdx; b.appendChild(tag);
@@ -332,7 +397,7 @@
     riskNoteEl.textContent=data.riskNote;
 
     var ol=$("improvements"); clear(ol);
-    data.improvements.forEach(function(s){ var li=document.createElement("li"); li.textContent=s; ol.appendChild(li); });
+    data.improvements.forEach(function(s){ var li=document.textContent=s; ol.appendChild(li); });
 
     var rl=$("replies"); clear(rl);
     data.replies.forEach(function(r){
@@ -344,154 +409,5 @@
     });
     await drawThumb();
   }
-  Array.prototype.forEach.call(document.querySelectorAll("[data-copy]"),function(b){
-    b.addEventListener("click",function(){
-      var k=b.getAttribute("data-copy"), t="";
-      if(k==="tags") t=data.tags.join(", ");
-      copyText(t,b);
-    });
-  });
 
-  /* ----- thumbnail ----- */
-  function wrapLines(ctx,text,maxW){
-    var words=text.split(/\s+/).filter(Boolean), lines=[], cur="";
-    words.forEach(function(w){
-      var test=cur?cur+" "+w:w;
-      if(ctx.measureText(test).width<=maxW||!cur) cur=test; else { lines.push(cur); cur=w; }
-    });
-    if(cur) lines.push(cur);
-    return lines;
-  }
-  function fitLines(ctx,text,maxW,maxSize,minSize,maxLines,weight,font){
-    var size=maxSize, lines=[];
-    for(;size>=minSize;size-=4){
-      ctx.font=weight+' '+size+'px "'+font+'","Hind",system-ui,sans-serif';
-      lines=wrapLines(ctx,text,maxW);
-      var okw=lines.every(function(l){ return ctx.measureText(l).width<=maxW; });
-      if(lines.length<=maxLines&&okw) break;
-    }
-    return {size:size,lines:lines};
-  }
-  async function drawThumb(){
-    try{ await document.fonts.load('800 60px "Archivo"'); await document.fonts.load('700 60px "Archivo"',"\u0905\u0906"); }catch(e){}
-    var wide=platformSel.value==="ytlong", W=wide?1280:1080, H=wide?720:1920;
-    canvas.width=W; canvas.height=H;
-    var ctx=canvas.getContext("2d"), src=(thumbStyle==="ai"&&aiImg)?aiImg:frames[bestIdx];
-    if(src){
-      var s=Math.max(W/src.width,H/src.height), dw=src.width*s, dh=src.height*s;
-      ctx.drawImage(src,(W-dw)/2,(H-dh)/2,dw,dh);
-    } else {
-      var g=ctx.createLinearGradient(0,0,W,H);
-      g.addColorStop(0,"#E7A23C"); g.addColorStop(0.55,"#C97435"); g.addColorStop(1,"#7A2E1C");
-      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-    }
-    var text=thumbText.value.trim();
-
-    if(thumbStyle==="minimal"){
-      var barH=H*0.2;
-      ctx.fillStyle="#1B130A"; ctx.fillRect(0,H-barH,W,barH);
-      ctx.fillStyle="#E7A23C"; ctx.fillRect(0,H-barH,W*0.05,barH);
-      if(!text) return;
-      var fit=fitLines(ctx,text,W*0.82,W*0.09,W*0.04,2,"700","Archivo");
-      ctx.textAlign="left"; ctx.textBaseline="middle"; ctx.fillStyle="#fff";
-      ctx.font='700 '+fit.size+'px "Archivo",system-ui,sans-serif';
-      var lh1=fit.size*1.18, y0=H-barH/2-((fit.lines.length-1)*lh1)/2;
-      fit.lines.forEach(function(l,i){ ctx.fillText(l,W*0.08,y0+i*lh1); });
-      return;
-    }
-
-    var sc=ctx.createLinearGradient(0,H*0.45,0,H);
-    sc.addColorStop(0,"rgba(0,0,0,0)"); sc.addColorStop(1,"rgba(0,0,0,0.75)");
-    ctx.fillStyle=sc; ctx.fillRect(0,H*0.45,W,H*0.55);
-
-    if(thumbStyle==="emoji"){
-      var er=W*0.09, ex=W*0.14, ey=H*0.14;
-      ctx.beginPath(); ctx.arc(ex,ey,er,0,Math.PI*2); ctx.fillStyle="rgba(0,0,0,.45)"; ctx.fill();
-      ctx.strokeStyle="rgba(255,255,255,.7)"; ctx.lineWidth=W*0.004; ctx.stroke();
-      ctx.font=(er*1.15)+'px system-ui,"Segoe UI Emoji","Noto Color Emoji",sans-serif';
-      ctx.textAlign="center"; ctx.textBaseline="middle";
-      ctx.fillStyle="#fff"; ctx.fillText(data.thumbEmoji||"\u2728",ex,ey+er*0.06);
-    }
-
-    if(!text) return;
-    var f2=fitLines(ctx,text,W*0.86,W*0.15,W*0.05,3,"800","Archivo");
-    ctx.textAlign="center"; ctx.textBaseline="alphabetic"; ctx.lineJoin="round";
-    ctx.lineWidth=f2.size*0.16; ctx.strokeStyle="#000"; ctx.fillStyle="#fff";
-    ctx.font='800 '+f2.size+'px "Archivo",system-ui,sans-serif';
-    var lh=f2.size*1.12, y=H-H*0.07-(f2.lines.length-1)*lh;
-    f2.lines.forEach(function(l,i){ var yy=y+i*lh; ctx.strokeText(l,W/2,yy); ctx.fillText(l,W/2,yy); });
-  }
-  thumbText.addEventListener("input",function(){ drawThumb(); });
-
-  var stylebar=$("stylebar");
-  function selectStyle(name){
-    thumbStyle=name;
-    Array.prototype.forEach.call(stylebar.querySelectorAll(".stylechip"),function(x){ x.setAttribute("aria-pressed",x.getAttribute("data-style")===name?"true":"false"); });
-    drawThumb();
-  }
-  if(stylebar){
-    Array.prototype.forEach.call(stylebar.querySelectorAll(".stylechip"),function(b){
-      b.addEventListener("click",function(){ selectStyle(b.getAttribute("data-style")); });
-    });
-  }
-
-  function loadImage(dataUrl){
-    return new Promise(function(res,rej){
-      var img=new Image();
-      img.onload=function(){ res(img); };
-      img.onerror=function(){ rej(new Error("decode")); };
-      img.src=dataUrl;
-    });
-  }
-  var THUMB_ERR={
-    ai_not_configured:"AI photos aren't turned on for this site yet: add a Workers AI binding named AI in Cloudflare project settings.",
-    bad_request:"Add a one-line description above (or a video) first, then try again.",
-    rate_limited:"The free daily limit for AI photos is reached. Try again tomorrow.",
-    upstream:"The AI photo service didn't respond. Try again in a moment.",
-    invalid_json:"Couldn't create a photo from that. Try a different description.",
-    forbidden:"This request was blocked. Open the site from its own address.",
-    network:"Couldn't reach the server. Check your internet and try again."
-  };
-  if(genThumb){
-    genThumb.addEventListener("click",async function(){
-      if(aiCtl) aiCtl.abort();
-      aiCtl=new AbortController();
-      genThumb.disabled=true; thumbAiStatus.className="note"; thumbAiStatus.textContent="Creating a photo... this can take a few seconds.";
-      try{
-        var scene=(hint.value.trim()||data.titles[0]||"a short video for social media").slice(0,300);
-        var res=await fetch("/api/thumbnail",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:scene}),signal:aiCtl.signal});
-        var j=null; try{ j=await res.json(); }catch(e){}
-        if(!res.ok||!j||!j.image) throw {code:(j&&j.error)||("http_"+res.status)};
-        aiImg=await loadImage("data:image/jpeg;base64,"+j.image);
-        aiChip.hidden=false;
-        selectStyle("ai");
-        thumbAiStatus.textContent="Done. This used a small amount of the site's free daily AI photo allowance.";
-      }catch(e){
-        if(e&&e.name==="AbortError") return;
-        thumbAiStatus.className="note err";
-        thumbAiStatus.textContent=THUMB_ERR[e&&e.code]||"Something went wrong. Please try again.";
-      } finally {
-        genThumb.disabled=false;
-      }
-    });
-  }
-
-  var tb=$("tiltbox"), tw=$("tiltwrap");
-  if(!reduce&&window.matchMedia&&window.matchMedia("(pointer:fine)").matches){
-    tb.addEventListener("pointermove",function(e){
-      var r=tb.getBoundingClientRect(), x=(e.clientX-r.left)/r.width-0.5, y=(e.clientY-r.top)/r.height-0.5;
-      tw.style.setProperty("--ry",(x*14)+"deg"); tw.style.setProperty("--rx",(-y*10)+"deg");
-    });
-    tb.addEventListener("pointerleave",function(){ tw.style.setProperty("--ry","0deg"); tw.style.setProperty("--rx","0deg"); });
-  }
-
-  dl.addEventListener("click",async function(){
-    dlmsg.textContent="";
-    var blob=await new Promise(function(r){ canvas.toBlob(r,"image/png"); });
-    if(!blob){ dlmsg.textContent="Couldn't create the image. Long-press the thumbnail to save it."; return; }
-    var url=URL.createObjectURL(blob), a=document.createElement("a");
-    a.href=url; a.download="clippack-thumbnail.png"; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(function(){ URL.revokeObjectURL(url); },4000);
-    dlmsg.textContent="Download started. If nothing happens, long-press the thumbnail to save it.";
-  });
-})();
+  Array.prototype.forEa
