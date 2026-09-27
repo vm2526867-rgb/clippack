@@ -1,17 +1,13 @@
 // ClipPack backend (Cloudflare Pages Function)
-// Lives at: functions/api/generate.js   ->   URL: /api/generate
-//
-// Set these in Cloudflare (Settings > Variables and Secrets):
-//   GEMINI_API_KEY   (required, add it as a Secret)
-//   GEMINI_MODEL     (optional; a model name from Google AI Studio, default below)
+// Lives at: functions/api/generate.js -> URL: /api/generate
 
-const DEFAULT_MODEL = "gemini-2.5-flash"; // Audio & Visual analysis ke liye Flash best model hai
+const DEFAULT_MODEL = "gemini-2.5-flash"; 
 const MAX_PROMPT = 8000;
 const MAX_IMAGES = 4;
-const MAX_IMAGE_B64 = 1200000; // characters of base64 per frame (~0.9 MB)
+const MAX_IMAGE_B64 = 1200000;
 const ALLOWED_IMAGE_MIME = ["image/jpeg", "image/png", "image/webp"];
 const ALLOWED_AUDIO_MIME = ["audio/wav", "audio/mp3", "audio/mpeg", "audio/ogg", "audio/webm"];
-const MAX_TREND_TEXT = 900; // characters of trend research kept for the second pass
+const MAX_TREND_TEXT = 900;
 
 function json(obj, status) {
   return new Response(JSON.stringify(obj), {
@@ -23,7 +19,6 @@ function json(obj, status) {
   });
 }
 
-// Only accept browser requests coming from this same site.
 function sameOrigin(request) {
   const origin = request.headers.get("Origin");
   if (!origin) return true;
@@ -60,7 +55,6 @@ function textFromCandidate(cand) {
     : "";
 }
 
-// One call to the Gemini API. `extra` merges into generationConfig / adds tools.
 async function callGemini(model, key, parts, extra) {
   const url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent";
   const body = { contents: [{ role: "user", parts: parts }] };
@@ -81,9 +75,7 @@ async function callGemini(model, key, parts, extra) {
   if (r.status === 429) throw { code: "rate_limited" };
   if (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 404) {
     let detail = "";
-    try {
-      detail = (await r.text()).slice(0, 300);
-    } catch (e) {}
+    try { detail = (await r.text()).slice(0, 300); } catch (e) {}
     console.error("Gemini config error", r.status, detail);
     throw { code: "upstream_config", status: r.status };
   }
@@ -93,9 +85,7 @@ async function callGemini(model, key, parts, extra) {
   }
 
   let data = null;
-  try {
-    data = await r.json();
-  } catch (e) {}
+  try { data = await r.json(); } catch (e) {}
 
   if (data && data.promptFeedback && data.promptFeedback.blockReason) throw { code: "refused" };
   const cand = data && data.candidates && data.candidates[0];
@@ -104,7 +94,6 @@ async function callGemini(model, key, parts, extra) {
   return { text: text, cand: cand };
 }
 
-// Open /api/generate in a browser to check the setup
 export async function onRequestGet({ env }) {
   return json({
     ok: true,
@@ -123,16 +112,13 @@ export async function onRequestPost({ request, env }) {
   if (!key) return json({ error: "not_configured" }, 500);
 
   let body;
-  try {
-    body = await request.json();
-  } catch (e) {
-    return json({ error: "bad_request" }, 400);
-  }
+  try { body = await request.json(); } catch (e) { return json({ error: "bad_request" }, 400); }
 
   const prompt = body && typeof body.prompt === "string" ? body.prompt.slice(0, MAX_PROMPT) : "";
 
-  // 1. Audio Data Input (Agur frontend audio bhejta hai)
   const mediaParts = [];
+
+  // 1. Audio Processing
   if (body && body.audio && typeof body.audio.data === "string") {
     const audioMime = body.audio.mime || "audio/wav";
     if (ALLOWED_AUDIO_MIME.includes(audioMime)) {
@@ -140,35 +126,29 @@ export async function onRequestPost({ request, env }) {
     }
   }
 
-  // 2. Visual Image Frames Input
+  // 2. Image Frames Processing
   const imgs = body && Array.isArray(body.images) ? body.images.slice(0, MAX_IMAGES) : [];
   for (const im of imgs) {
     if (
-      im &&
-      typeof im.data === "string" &&
-      im.data.length <= MAX_IMAGE_B64 &&
-      ALLOWED_IMAGE_MIME.includes(im.mime)
+      im && typeof im.data === "string" && im.data.length <= MAX_IMAGE_B64 && ALLOWED_IMAGE_MIME.includes(im.mime)
     ) {
       mediaParts.push({ inline_data: { mime_type: im.mime, data: im.data } });
     }
   }
 
-  // Validation: kam se kam Audio, Image ya text prompt hona chahiye
   if (mediaParts.length === 0 && prompt.trim().length < 10) {
-    return json({ error: "bad_request", message: "Provide audio, images, or a detailed prompt" }, 400);
+    return json({ error: "bad_request", message: "Provide audio, video frames, or prompt" }, 400);
   }
 
   const model = (env.GEMINI_MODEL || DEFAULT_MODEL).trim();
-  if (!/^[A-Za-z0-9._-]+$/.test(model)) return json({ error: "not_configured" }, 500);
 
-  // Pass 1: Google Search Research Pass
+  // Pass 1: Google Search Trends Analysis
   let trendText = "";
   try {
     const researchPrompt =
-      "Carefully analyze the attached audio track/speech and video frames. Identify the exact content topic, spoken details, and niche. " +
-      "Use Google Search to find real, current trends on YouTube Shorts & Instagram Reels in India for this niche (hashtags, formats, key concepts). " +
-      "Reply in 4 to 6 plain text lines with the niche and real trends found. If nothing is found, state it in one line.\n\n" +
-      "Creator's note: \"" + prompt.slice(0, 400) + "\"";
+      "Analyze the attached spoken audio track and video frames. " +
+      "Search for real, current trends on YouTube Shorts, Instagram Reels, and viral topics in India for this specific niche. " +
+      "Reply in 3-5 concise bullet points with real current trends found.";
 
     const researchParts = [{ text: researchPrompt }].concat(mediaParts);
     const pass1 = await callGemini(model, key, researchParts, {
@@ -181,14 +161,11 @@ export async function onRequestPost({ request, env }) {
     trendText = "";
   }
 
-  // Pass 2: Main Metadata Generation Pass
+  // Pass 2: Main Metadata Generation
   const instructionPrompt = 
-    "You are a YouTube SEO expert. Deeply analyze the spoken audio/speech and visual frames provided. " +
-    "Understand the complete context, spoken words, timing, and topic. " +
-    (prompt ? "Creator instructions: " + prompt + "\n" : "") +
-    (trendText ? "Relevant current search trends:\n\"\"\"\n" + trendText + "\n\"\"\"\n" : "") +
-    "Generate highly accurate YouTube Metadata in STRICT JSON format with these exact keys: " +
-    "\"title\", \"description\", \"tags\" (array), \"hashtags\" (array), \"thumbnail_prompt\".";
+    prompt + "\n\n" +
+    (trendText ? "Real-time Google search trends for context:\n\"\"\"\n" + trendText + "\n\"\"\"\n" : "") +
+    "CRITICAL: Base your output strictly on the spoken speech/audio and visible visual frames provided.";
 
   const finalParts = [{ text: instructionPrompt }].concat(mediaParts);
 
@@ -207,4 +184,4 @@ export async function onRequestPost({ request, env }) {
   if (!parsed || typeof parsed !== "object") return json({ error: "invalid_json" }, 502);
   parsed._trend_researched = !!trendText;
   return json({ result: parsed });
-                             }
+}
