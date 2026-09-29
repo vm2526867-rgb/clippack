@@ -1,243 +1,221 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Toolcube is a directory of 150+ AI tools for chat, images, video, audio, coding, writing and business. Find the right AI tool and visit it in one click.">
-<title>Toolcube - Every AI tool, one click away</title>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#f2f0ff;--card:#ffffff;--text:#15123a;--muted:#5d5a86;--a:#7c5cff;--b:#12b8e6;--c:#ff6b8a;--bd:#d8d3fb;--sh:rgba(80,60,200,.22)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0a1f;--card:#17153d;--text:#f1efff;--muted:#a19ecf;--a:#8f74ff;--b:#29e0ff;--c:#ff7d9a;--bd:#2c2966;--sh:rgba(0,0,0,.55)}}
-:root[data-theme="dark"]{--bg:#0b0a1f;--card:#17153d;--text:#f1efff;--muted:#a19ecf;--a:#8f74ff;--b:#29e0ff;--c:#ff7d9a;--bd:#2c2966;--sh:rgba(0,0,0,.55)}
-*{box-sizing:border-box;margin:0}
-body{font-family:Sora,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;background-image:radial-gradient(60% 40% at 80% 0,color-mix(in srgb,var(--a) 28%,transparent),transparent),radial-gradient(50% 35% at 0 30%,color-mix(in srgb,var(--b) 18%,transparent),transparent)}
-header{display:flex;justify-content:space-between;align-items:center;padding:18px 5vw}
-.logo{font-weight:800;font-size:20px}
-.logo i{display:inline-block;width:18px;height:18px;margin-right:8px;border-radius:4px;background:linear-gradient(135deg,var(--a),var(--b));transform:rotate(45deg) skew(8deg,8deg);box-shadow:4px 4px 0 var(--c)}
-.pill{font-size:13px;color:var(--muted);border:1px solid var(--bd);border-radius:99px;padding:6px 14px;background:var(--card)}
-.hero{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:40px;padding:30px 5vw 40px}
-.copy{flex:1 1 320px;max-width:560px}
-h1{font-size:clamp(34px,6vw,58px);line-height:1.05;font-weight:800;letter-spacing:-.02em}
-.copy p{margin:16px 0 22px;color:var(--muted);line-height:1.6;max-width:46ch}
-.search{width:100%;padding:15px 20px;border-radius:14px;border:1px solid var(--bd);background:var(--card);color:var(--text);font:inherit;box-shadow:0 12px 30px var(--sh)}
-.search:focus,.chip:focus-visible,.visit:focus-visible{outline:3px solid var(--b);outline-offset:2px}
-.stage{perspective:900px;width:230px;height:230px;display:grid;place-items:center}
-.cube{position:relative;width:130px;height:130px;transform-style:preserve-3d;animation:spin 16s linear infinite}
-.stage:hover .cube{animation-play-state:paused}
-.f{position:absolute;inset:0;display:grid;place-items:center;font-size:46px;border:1px solid #ffffff66;border-radius:14px;background:linear-gradient(135deg,var(--a),var(--b));opacity:.92}
-.f:nth-child(1){transform:translateZ(65px)}.f:nth-child(2){transform:rotateY(90deg) translateZ(65px);background:linear-gradient(135deg,var(--b),var(--c))}
-.f:nth-child(3){transform:rotateY(180deg) translateZ(65px)}.f:nth-child(4){transform:rotateY(-90deg) translateZ(65px);background:linear-gradient(135deg,var(--c),var(--a))}
-.f:nth-child(5){transform:rotateX(90deg) translateZ(65px)}.f:nth-child(6){transform:rotateX(-90deg) translateZ(65px)}
-@keyframes spin{to{transform:rotateX(360deg) rotateY(360deg)}}
-.chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:0 5vw 26px}
-.chip{border:1px solid var(--bd);background:var(--card);color:var(--text);font:inherit;font-size:14px;padding:9px 18px;border-radius:99px;cursor:pointer;box-shadow:0 4px 0 var(--bd);transition:transform .12s,box-shadow .12s}
-.chip:active{transform:translateY(3px);box-shadow:0 1px 0 var(--bd)}
-.chip.on{background:linear-gradient(135deg,var(--a),var(--b));color:#fff;border-color:transparent;box-shadow:0 4px 0 color-mix(in srgb,var(--a) 60%,#000)}
-main{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:26px;padding:10px 5vw 60px;max-width:1240px;margin:auto}
-.card{position:relative;transform-style:preserve-3d;background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:22px;box-shadow:0 18px 40px var(--sh),0 6px 0 var(--bd);transition:transform .18s ease-out;will-change:transform}
-.ico{position:relative;width:58px;height:58px;display:grid;place-items:center;font-size:21px;font-weight:800;color:#fff;letter-spacing:-.02em;border-radius:16px;transform:translateZ(46px);box-shadow:0 14px 22px var(--sh)}
-.ico img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff;padding:9px;border-radius:16px}
-.card h3{margin:18px 0 4px;font-size:18px;transform:translateZ(28px)}
-.tag{font-size:12px;color:var(--a);font-weight:600;transform:translateZ(20px);display:block}
-.card p{margin:10px 0 18px;font-size:14px;line-height:1.55;color:var(--muted);min-height:66px;transform:translateZ(12px)}
-.visit{display:block;text-align:center;text-decoration:none;color:#fff;font-weight:600;font-size:14px;padding:12px;border-radius:12px;background:linear-gradient(135deg,var(--a),var(--c));transform:translateZ(34px);box-shadow:0 5px 0 color-mix(in srgb,var(--a) 55%,#000)}
-.visit:active{transform:translateZ(34px) translateY(4px);box-shadow:0 1px 0 #0006}
-.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:40px}
-footer{text-align:center;color:var(--muted);font-size:12.5px;padding:0 5vw 40px}
-@media (prefers-reduced-motion:reduce){.cube{animation:none;transform:rotateX(-25deg) rotateY(35deg)}.card{transition:none}}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>ClipPack: drop in a video, we do the rest</title>
+<meta name="description" content="Drop in a short video and get a title, description, hashtags, thumbnail idea and posting tips for YouTube Shorts, Reels and Facebook. The AI listens to what you say.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://clippack-c97.pages.dev/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ClipPack: drop in a video, we do the rest">
+<meta property="og:description" content="Title, description, hashtags and a thumbnail read straight off your clip. In Hindi, Hinglish or English.">
+<meta property="og:url" content="https://clippack-c97.pages.dev/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Archivo:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header><div class="logo"><i></i>Toolcube</div><div class="pill" id="cnt">Tools opened: 0</div></header>
-<section class="hero">
-  <div class="copy">
-    <h1>Every AI tool, one click away</h1>
-    <p>Browse the best AI tools for chat, images, video, audio, code and writing. Pick one and jump straight to its site.</p>
-    <input class="search" id="q" type="search" placeholder="Search tools or what you want to do" aria-label="Search AI tools">
+
+<section class="hero" id="hero">
+  <div class="stage3d" aria-hidden="true"><div class="stars" id="stars"></div><div class="tilt" id="tilt"><div class="ring" id="ring"></div></div></div>
+  <nav class="nav">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E7A23C"/><stop offset="1" stop-color="#B7492A"/></linearGradient></defs><rect x="2" y="2" width="28" height="28" rx="7" fill="url(#lg)"/><path d="M12.5 9.5v13l10-6.5z" fill="#1B130A"/></svg>
+      ClipPack
+    </div>
+    <span class="pill">beta</span>
+  </nav>
+  <div class="hero-copy">
+    <div class="in">
+      <h1>Drop a video. We do the rest.</h1>
+      <p class="lede">Title, description, hashtags and a thumbnail, read straight off your clip. One pass, in Hindi, Hinglish or English.</p>
+      <a class="cta" href="#studio">Choose a video</a>
+    </div>
   </div>
-  <div class="stage" aria-hidden="true"><div class="cube"><div class="f">🤖</div><div class="f">🎨</div><div class="f">🎬</div><div class="f">🎧</div><div class="f">💻</div><div class="f">✍️</div></div></div>
 </section>
-<nav class="chips" id="chips" aria-label="Categories"></nav>
-<main id="grid" aria-live="polite"></main>
-<footer>Tool names belong to their owners.</footer>
-<script>
-const D=`ChatGPT|Chat|Everyday assistant for writing, questions and code|chatgpt.com
-Claude|Chat|Careful long answers and document analysis|claude.ai
-Gemini|Chat|Google's assistant tied to Search and Gmail|gemini.google.com
-Copilot|Chat|Microsoft's assistant for web and Office|copilot.microsoft.com
-Grok|Chat|xAI assistant with live X posts|grok.com
-Meta AI|Chat|Free assistant inside Meta apps|meta.ai
-Le Chat|Chat|Mistral's fast multilingual assistant|chat.mistral.ai
-DeepSeek|Chat|Open reasoning models with free chat|chat.deepseek.com
-Pi|Chat|Friendly conversational personal assistant|pi.ai
-Poe|Chat|Try many AI models in one place|poe.com
-Character.AI|Chat|Chat with AI characters and personas|character.ai
-HuggingChat|Chat|Chat with open-source models|huggingface.co/chat
-Perplexity|Research|Answers with sources listed|perplexity.ai
-You.com|Research|AI search with apps and agents|you.com
-Consensus|Research|Answers drawn from scientific papers|consensus.app
-Elicit|Research|Find and summarise academic studies|elicit.com
-NotebookLM|Research|Ask questions about your own documents|notebooklm.google.com
-Genspark|Research|AI search that builds full pages|genspark.ai
-Scite|Research|Check how papers cite each other|scite.ai
-Midjourney|Image|Detailed artistic images from text|midjourney.com
-Leonardo AI|Image|Game art, concepts and product images|leonardo.ai
-Ideogram|Image|Images with clean readable text|ideogram.ai
-Adobe Firefly|Image|Generate and edit images in Adobe style|firefly.adobe.com
-Stability AI|Image|Stable Diffusion image models|stability.ai
-Flux|Image|High-quality open image models|blackforestlabs.ai
-Playground|Image|Create and edit images and designs|playground.com
-NightCafe|Image|Community image generator|nightcafe.studio
-Krea|Image|Real-time image generation and upscaling|krea.ai
-Recraft|Image|Vector art, icons and brand visuals|recraft.ai
-Freepik AI|Image|Images and design assets|freepik.com/ai
-Lexica|Image|Search and make AI images|lexica.art
-Clipdrop|Image|Cleanup, relight and upscale photos|clipdrop.co
-Remove.bg|Image|Remove photo backgrounds instantly|remove.bg
-Photoroom|Image|Product photos with new backgrounds|photoroom.com
-Magnific|Image|Upscale images with added detail|magnific.ai
-Fotor|Image|Photo editing with AI tools|fotor.com
-Pixlr|Image|Browser photo editor with AI|pixlr.com
-Canva|Image|Design posts, slides and flyers|canva.com
-Runway|Video|Generate and edit video clips|runwayml.com
-Pika|Video|Short animated clips from a prompt|pika.art
-Luma|Video|Dream Machine video generation|lumalabs.ai
-Kling|Video|Realistic video from text or images|klingai.com
-Sora|Video|OpenAI's text-to-video tool|sora.com
-Hailuo|Video|Fast cinematic AI video|hailuoai.video
-HeyGen|Video|Talking avatar videos in many languages|heygen.com
-Synthesia|Video|Script to video with AI presenters|synthesia.io
-D-ID|Video|Make photos speak with avatars|d-id.com
-InVideo|Video|Turn text into finished videos|invideo.io
-Pictory|Video|Blog posts into short videos|pictory.ai
-Fliki|Video|Text to video with voiceover|fliki.ai
-CapCut|Video|Video editor with AI captions and effects|capcut.com
-OpusClip|Video|Cut long videos into viral shorts|opus.pro
-VEED|Video|Online editor with auto subtitles|veed.io
-Kapwing|Video|Collaborative video editing|kapwing.com
-Lumen5|Video|Articles into social videos|lumen5.com
-Colossyan|Video|AI actors for training videos|colossyan.com
-Steve AI|Video|Animated videos from text|steve.ai
-ElevenLabs|Audio|Lifelike voices and voice cloning|elevenlabs.io
-Suno|Audio|Full songs with vocals from a prompt|suno.com
-Udio|Audio|Create music in any genre|udio.com
-Murf|Audio|Studio voiceovers for ads and courses|murf.ai
-Play.ht|Audio|Realistic text-to-speech voices|play.ht
-Speechify|Audio|Listen to any text read aloud|speechify.com
-Otter|Audio|Meeting notes and transcripts|otter.ai
-Fireflies|Audio|Records and summarises meetings|fireflies.ai
-Podcastle|Audio|Record and edit podcasts|podcastle.ai
-Adobe Podcast|Audio|Clean up voice recordings|podcast.adobe.com
-LALAL.AI|Audio|Split vocals from instruments|lalal.ai
-Soundraw|Audio|Royalty-free music made for you|soundraw.io
-AIVA|Audio|Compose original soundtracks|aiva.ai
-Mubert|Audio|Endless generated background music|mubert.com
-Riverside|Audio|Studio-quality remote recording|riverside.fm
-Krisp|Audio|Removes background noise in calls|krisp.ai
-Resemble AI|Audio|Custom voices for products|resemble.ai
-WellSaid|Audio|Natural voices for business content|wellsaidlabs.com
-Cursor|Code|Code editor that edits your whole project|cursor.com
-GitHub Copilot|Code|Suggests code as you type|github.com/features/copilot
-v0|Code|Interface code from a description|v0.dev
-Replit|Code|Build and host apps in the browser|replit.com
-Bolt|Code|Prompt to full-stack web app|bolt.new
-Lovable|Code|Build apps by chatting|lovable.dev
-Windsurf|Code|AI-native code editor|windsurf.com
-Tabnine|Code|Private code completion for teams|tabnine.com
-Blackbox AI|Code|Code search and generation|blackbox.ai
-Warp|Code|Terminal with AI commands|warp.dev
-Devin|Code|Autonomous AI software engineer|devin.ai
-Qodo|Code|Writes tests and reviews code|qodo.ai
-Pieces|Code|Save and reuse code snippets|pieces.app
-AI Studio|Code|Try Google models and build with them|aistudio.google.com
-Hugging Face|Code|Hub of open models and datasets|huggingface.co
-Jasper|Writing|Marketing copy in your brand voice|jasper.ai
-Grammarly|Writing|Fix grammar and tone as you write|grammarly.com
-Copy.ai|Writing|Sales emails and product copy|copy.ai
-QuillBot|Writing|Paraphrase and summarise text|quillbot.com
-Writesonic|Writing|Blog posts and ads in minutes|writesonic.com
-Rytr|Writing|Low-cost writing helper|rytr.me
-Wordtune|Writing|Rewrite sentences to sound better|wordtune.com
-Sudowrite|Writing|Helps novelists draft and unblock|sudowrite.com
-Anyword|Writing|Copy scored for performance|anyword.com
-TextCortex|Writing|Writing help across any site|textcortex.com
-DeepL|Writing|Accurate translation and rewriting|deepl.com
-ProWritingAid|Writing|Deep style and grammar checks|prowritingaid.com
-LanguageTool|Writing|Multilingual grammar checker|languagetool.org
-Lex|Writing|Clean editor with AI feedback|lex.page
-Notion AI|Productivity|Notes, docs and answers in one workspace|notion.com
-Gamma|Productivity|Slides and web pages from one prompt|gamma.app
-Descript|Productivity|Edit video by editing the transcript|descript.com
-Beautiful.ai|Productivity|Presentations that lay themselves out|beautiful.ai
-Zapier|Productivity|Connect apps and automate tasks|zapier.com
-Make|Productivity|Visual automation builder|make.com
-n8n|Productivity|Open workflow automation|n8n.io
-Mem|Productivity|Self-organising notes|mem.ai
-Motion|Productivity|Auto-plans your calendar and tasks|usemotion.com
-Reclaim|Productivity|Smart scheduling for your week|reclaim.ai
-Taskade|Productivity|Tasks, notes and AI agents|taskade.com
-Fathom|Productivity|Free meeting recorder and notes|fathom.video
-Superhuman|Productivity|Faster email with AI drafts|superhuman.com
-Airtable|Productivity|Databases with AI apps|airtable.com
-ClickUp|Productivity|Project management with AI|clickup.com
-Coda|Productivity|Docs that act like apps|coda.io
-Miro|Productivity|Whiteboards with AI|miro.com
-Whimsical|Productivity|Flowcharts and mind maps|whimsical.com
-Napkin|Productivity|Turn text into diagrams|napkin.ai
-Figma|Productivity|Interface design with AI|figma.com
-Framer|Productivity|Design and publish websites|framer.com
-Uizard|Productivity|Sketches into app screens|uizard.io
-Durable|Productivity|Website ready in seconds|durable.co
-Wix|Productivity|Website builder with AI|wix.com
-Relume|Productivity|Site maps and wireframes|relume.io
-Lindy|Business|Build AI assistants for your work|lindy.ai
-Relevance AI|Business|Build teams of AI agents|relevanceai.com
-Gumloop|Business|No-code AI automations|gumloop.com
-Voiceflow|Business|Design chat and voice agents|voiceflow.com
-Botpress|Business|Build support chatbots|botpress.com
-Intercom|Business|Fin answers customer questions|intercom.com
-Tidio|Business|Chat support for small shops|tidio.com
-HubSpot|Business|CRM with AI marketing tools|hubspot.com
-Apollo|Business|Find and email sales leads|apollo.io
-Clay|Business|Enrich lead data with AI|clay.com
-Instantly|Business|Cold email at scale|instantly.ai
-Gong|Business|Insights from sales calls|gong.io
-Surfer|Business|Write content that ranks in search|surferseo.com
-Semrush|Business|SEO and marketing research|semrush.com
-Ahrefs|Business|SEO data and keyword tools|ahrefs.com
-Buffer|Business|Plan and write social posts|buffer.com
-Predis|Business|Social posts and ads on autopilot|predis.ai
-Looka|Business|Logo and brand kit maker|looka.com
-Brandmark|Business|Logos and business names|brandmark.io
-Namelix|Business|Business name ideas|namelix.com
-Julius|Business|Analyse data by chatting|julius.ai
-Hex|Business|Data notebooks with AI|hex.tech
-Formula Bot|Business|Spreadsheet formulas from text|formulabot.com
-Harvey|Business|AI assistant for legal work|harvey.ai
-Kittl|Business|Design logos and merch|kittl.com`;
-const I={Chat:"💬",Research:"🔎",Image:"🎨",Video:"🎬",Audio:"🎧",Code:"💻",Writing:"✍️",Productivity:"🗂️",Business:"📈"};
-const T=D.split("\n").map(l=>{const[a,b,c,e]=l.split("|");return[a,b,c,"https://"+e]});
-const cats=["All",...new Set(T.map(t=>t[1]))];
-let cat="All",term="",clicks={};
-try{clicks=JSON.parse(localStorage.getItem("tc")||"{}")}catch(e){}
-const $=id=>document.getElementById(id);
-function total(){return Object.values(clicks).reduce((a,b)=>a+b,0)}
-function count(){$("cnt").textContent="Tools opened: "+total()}
-function chips(){$("chips").innerHTML=cats.map(c=>`<button class="chip${c===cat?" on":""}" data-c="${c}">${c}</button>`).join("")}
-function hu(n){let x=0;for(const c of n)x=(x*31+c.charCodeAt(0))%360;return x}
-function ini(n){const w=n.split(/[\s.]+/).filter(Boolean);return esc(w.length>1?(w[0][0]+w[1][0]).toUpperCase():n[0].toUpperCase()+n.slice(1,2).toLowerCase())}
-function esc(s){return s.replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]))}
-function draw(){
-  const l=T.filter(t=>(cat==="All"||t[1]===cat)&&(t[0]+t[1]+t[2]).toLowerCase().includes(term));
-  $("grid").innerHTML=l.length?l.map(t=>`<article class="card"><div class="ico" style="background:linear-gradient(135deg,hsl(${hu(t[0])} 78% 58%),hsl(${(hu(t[0])+55)%360} 85% 46%))">${ini(t[0])}<img src="https://www.google.com/s2/favicons?domain=${new URL(t[3]).hostname}&sz=128" alt="" loading="lazy" onerror="this.remove()"></div><h3>${esc(t[0])}</h3><span class="tag">${t[1]}</span><p>${esc(t[2])}</p><a class="visit" href="${t[3]}" target="_blank" rel="noopener" data-n="${esc(t[0])}">Visit ${esc(t[0])}</a></article>`).join(""):`<div class="empty">No tools match. Try another word or category.</div>`;
-}
-$("chips").onclick=e=>{const c=e.target.dataset.c;if(c){cat=c;chips();draw()}};
-$("q").oninput=e=>{term=e.target.value.trim().toLowerCase();draw()};
-$("grid").addEventListener("click",e=>{const a=e.target.closest(".visit");if(!a)return;clicks[a.dataset.n]=(clicks[a.dataset.n]||0)+1;try{localStorage.setItem("tc",JSON.stringify(clicks))}catch(x){}count()});
-$("grid").addEventListener("mousemove",e=>{const c=e.target.closest(".card");if(!c||matchMedia("(prefers-reduced-motion:reduce)").matches)return;const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.style.transform=`perspective(800px) rotateX(${-y*14}deg) rotateY(${x*14}deg)`});
-$("grid").addEventListener("mouseout",e=>{const c=e.target.closest(".card");if(c&&!c.contains(e.relatedTarget))c.style.transform=""});
-chips();draw();count();
-</script>
+
+<section class="steps" aria-label="How it works">
+  <div class="step">
+    <p class="step-n">01</p>
+    <p class="step-t">Drop your clip</p>
+    <p class="step-d">MP4 or MOV. It stays on your phone — only a few small frames and a short audio clip go to the AI.</p>
+  </div>
+  <div class="step">
+    <p class="step-n">02</p>
+    <p class="step-t">The AI reads the frames</p>
+    <p class="step-d">Title, description, hashtags, best posting time and a thumbnail, all from what's on screen.</p>
+  </div>
+  <div class="step">
+    <p class="step-n">03</p>
+    <p class="step-t">Copy and post</p>
+    <p class="step-d">Everything's ready to paste in. Give it a read before you publish.</p>
+  </div>
+</section>
+
+<main class="studio" id="studio">
+  <div class="panel">
+    <h2>Drop your video here</h2>
+
+    <label class="drop" id="drop" for="file">
+      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="4" y="10" width="40" height="28" rx="6" stroke="currentColor" stroke-width="2.5"/><path d="M20 19v10l9-5z" fill="currentColor"/></svg>
+      <span class="drop-title" id="dropTitle">Choose a video</span>
+      <span class="drop-sub" id="dropSub">MP4 or MOV. Your video is never uploaded; only up to 6 small frames and a short audio clip go to the AI.</span>
+    </label>
+    <input class="sr" id="file" type="file" accept="video/*">
+
+    <div class="grid">
+      <div>
+        <label class="field" for="platform">Main platform (opens first below)</label>
+        <select id="platform">
+          <option value="ytshorts">YouTube Shorts</option>
+          <option value="ytlong">YouTube (long video)</option>
+          <option value="reels">Instagram Reels</option>
+          <option value="fb">Facebook</option>
+        </select>
+      </div>
+      <div>
+        <label class="field" for="lang">Language</label>
+        <select id="lang">
+          <option value="hinglish">Hinglish (Roman)</option>
+          <option value="hindi">Hindi (Devanagari)</option>
+          <option value="english">English</option>
+        </select>
+      </div>
+    </div>
+
+    <label class="field" for="hint">One line about your video (optional)</label>
+    <textarea id="hint" placeholder="For example: 5-minute masala chai at home, or: my first day at the gym"></textarea>
+
+    <div class="planbar" id="planbar">
+      <p class="plan-line" id="planLine" role="status" aria-live="polite"></p>
+      <a class="ghost upgrade" id="upgradeLink" href="#" target="_blank" rel="noopener" hidden>Upgrade to Pro</a>
+      <div class="license" id="licenseRow" hidden>
+        <label class="field" for="licenseInput">Have a Pro license key?</label>
+        <div class="license-in">
+          <input type="text" id="licenseInput" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste your license key">
+          <button class="ghost" id="licenseBtn" type="button">Activate</button>
+        </div>
+      </div>
+      <p class="note" id="licenseMsg" role="status" aria-live="polite"></p>
+      <button class="ghost" id="licenseRemove" type="button" hidden>Remove license key from this browser</button>
+    </div>
+
+    <button class="primary" id="go" type="button" disabled>Choose a video or write a line</button>
+    <button class="ghost" id="stop" type="button" hidden style="margin-top:10px;width:100%">Stop</button>
+    <div class="loadbar" id="bar" aria-hidden="true"></div>
+    <p id="status" role="status" aria-live="polite"></p>
+    <p class="note" id="audioNote" role="status" aria-live="polite"></p>
+    <p class="note">Your video file never leaves your phone. Only up to 6 small frames and a short audio clip (so the AI can hear what's said) are sent to Google's Gemini AI. It also works without a video: just write one line above.</p>
+  </div>
+
+  <section class="out" id="stripWrap" hidden>
+    <div class="sec-h"><h2>Video frames</h2></div>
+    <p class="note" style="margin:0 0 12px">Tap a frame to use it for the thumbnail.</p>
+    <div class="strip" id="strip"></div>
+  </section>
+
+  <section class="out" id="results" hidden>
+    <p class="summary reveal" id="summary" style="--i:0"></p>
+
+    <div class="block reveal" style="--i:1">
+      <div class="sec-h"><h2>Optimization score</h2></div>
+      <div class="score">
+        <div class="score-top"><span class="score-num" id="scoreNum">0</span><span class="score-max">/100</span></div>
+        <div class="score-bar"><div class="score-fill" id="scoreFill"></div></div>
+        <p class="note" id="scoreReason" style="margin-top:8px"></p>
+      </div>
+    </div>
+
+    <div class="block reveal" style="--i:2">
+      <div class="sec-h"><h2>Topic</h2></div>
+      <p class="chips" style="display:flex"><span class="cat-chip" id="category"></span></p>
+    </div>
+
+    <div class="block reveal" style="--i:3">
+      <div class="sec-h"><h2>Hook ideas</h2></div>
+      <ul class="replies" id="hooks"></ul>
+    </div>
+
+    <div class="block reveal" style="--i:4">
+      <div class="sec-h"><h2>Title, description &amp; hashtags</h2><button class="ghost" type="button" id="copyAll">Copy all</button></div>
+      <div class="ptabs" id="ptabs" role="group" aria-label="Platform">
+        <button class="stylechip" type="button" data-p="ytshorts" aria-pressed="false">Shorts</button>
+        <button class="stylechip" type="button" data-p="reels" aria-pressed="false">Reels</button>
+        <button class="stylechip" type="button" data-p="fb" aria-pressed="false">Facebook</button>
+        <button class="stylechip" type="button" data-p="ytlong" aria-pressed="false">YT long</button>
+      </div>
+      <p class="titles-single" id="pTitle"></p>
+      <p class="pre" id="pDescription" style="margin-top:10px"></p>
+      <ul class="chips" id="pHashtags" style="margin-top:10px"></ul>
+    </div>
+
+    <div class="block reveal" style="--i:5">
+      <div class="sec-h"><h2>Tags (YouTube search)</h2><button class="ghost" type="button" data-copy="tags">Copy</button></div>
+      <p class="tags" id="tags"></p>
+    </div>
+
+    <div class="block reveal" style="--i:6">
+      <div class="sec-h"><h2>Thumbnail visual idea</h2></div>
+      <p class="pre" id="thumbIdea"></p>
+    </div>
+
+    <div class="block reveal" style="--i:7">
+      <div class="sec-h"><h2>Best time to post</h2></div>
+      <p class="besttime" id="besttime"></p>
+    </div>
+
+    <div class="block reveal" style="--i:8">
+      <div class="sec-h"><h2>Reused-content check</h2></div>
+      <p class="risk" id="riskNote"></p>
+      <p class="note">A rough read from the frames only, not a copyright check. When in doubt, use your own footage and audio.</p>
+    </div>
+
+    <div class="block reveal" style="--i:9">
+      <div class="sec-h"><h2>Ways to improve it</h2></div>
+      <ol class="improve" id="improvements"></ol>
+    </div>
+
+    <div class="block reveal" style="--i:10">
+      <div class="sec-h"><h2>Comment reply ideas</h2></div>
+      <ul class="replies" id="replies"></ul>
+    </div>
+
+    <div class="block reveal" style="--i:11">
+      <div class="sec-h"><h2>Thumbnail</h2></div>
+      <div class="stylebar" id="stylebar" role="group" aria-label="Thumbnail style">
+        <button class="stylechip" type="button" data-style="bold" aria-pressed="true">Bold</button>
+        <button class="stylechip" type="button" data-style="minimal" aria-pressed="false">Minimal</button>
+        <button class="stylechip" type="button" data-style="emoji" aria-pressed="false">Emoji</button>
+        <button class="stylechip" type="button" data-style="ai" aria-pressed="false" id="aiChip" hidden>AI Photo</button>
+      </div>
+      <button class="ghost" id="genThumb" type="button" style="width:100%;margin-bottom:14px">Generate AI photo (beta, free)</button>
+      <p id="thumbAiStatus" class="note" role="status" aria-live="polite"></p>
+      <div class="tiltbox" id="tiltbox"><div class="tiltwrap" id="tiltwrap"><canvas id="thumb" width="1080" height="1920" aria-label="Thumbnail preview"></canvas></div></div>
+      <div class="thumbbar">
+        <div>
+          <label class="field" for="thumbText">Text on the thumbnail</label>
+          <input type="text" id="thumbText" maxlength="30">
+        </div>
+        <button class="primary" id="dl" type="button">Save thumbnail</button>
+      </div>
+      <p id="dlmsg" class="note" role="status"></p>
+    </div>
+
+    <p class="foot reveal" style="--i:12">This doesn't use trending data yet, only your video frames and your line. Read the AI's suggestions once before posting.</p>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <p>ClipPack is an independent tool and isn't affiliated with YouTube, Instagram, Facebook or Google.</p>
+  <p><a href="privacy.html">Privacy Policy</a> &middot; <a href="terms.html">Terms of Use</a></p>
+</footer>
+
+<script src="hero.js"></script>
+
+<script src="app.js"></script>
 </body>
-</html>
+  </html>
+  
