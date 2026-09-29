@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://clippack-c97.pages.dev/sitemap.xml
